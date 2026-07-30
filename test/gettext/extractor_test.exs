@@ -476,6 +476,41 @@ defmodule Gettext.ExtractorTest do
     Extractor.disable()
   end
 
+  test "duplicate references for one message are recorded once" do
+    Extractor.enable()
+
+    code = """
+    defmodule Gettext.ExtractorTest.SameLineGettext do
+      use Gettext.Backend, otp_app: :test_application
+    end
+
+    defmodule SameLine do
+      require Gettext.Macros
+
+      def bar do
+        [Gettext.Macros.gettext_with_backend(Gettext.ExtractorTest.SameLineGettext, "foo"), Gettext.Macros.gettext_with_backend(Gettext.ExtractorTest.SameLineGettext, "foo")]
+      end
+    end
+    """
+
+    Code.compile_string(code, Path.join(File.cwd!(), "same_line.ex"))
+
+    [{_path, {:changed, contents}}] =
+      :test_application
+      |> Extractor.pot_files([])
+      |> Enum.reject(&match?({_path, :unchanged}, &1))
+
+    references =
+      contents
+      |> IO.iodata_to_binary()
+      |> String.split("\n")
+      |> Enum.filter(&String.starts_with?(&1, "#: same_line.ex"))
+
+    assert references == ["#: same_line.ex:9"]
+  after
+    Extractor.disable()
+  end
+
   defp write_file(path, contents) do
     path |> Path.dirname() |> File.mkdir_p!()
     File.write!(path, contents)

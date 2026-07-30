@@ -102,7 +102,7 @@ defmodule Gettext.ExtractorAgent do
 
   defp merge_messages_after_checks(message_1, message_2) do
     message_1
-    |> Map.put(:references, message_1.references ++ message_2.references)
+    |> Map.put(:references, Enum.uniq(message_1.references ++ message_2.references))
     |> Map.put(
       :extracted_comments,
       Enum.uniq(message_1.extracted_comments ++ message_2.extracted_comments)
