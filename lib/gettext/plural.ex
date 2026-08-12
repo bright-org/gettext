@@ -277,7 +277,10 @@ defmodule Gettext.Plural do
 
         # Fall back to parsing headers such as "nplurals=3", without the "plural=..." part.
         # TODO: remove this in v0.24.0
-        with "nplurals=" <> rest <- String.trim(plural_forms_header),
+        # TODO: 削除するのかコメントアウトして残しておくのかの確認が必須
+        # AtomVM では Elixir.String が未実装のため、バイナリの手動 trim を使用。
+        # with "nplurals=" <> rest <- String.trim(plural_forms_header),
+        with "nplurals=" <> rest <- trim_binary(plural_forms_header),
              {plural_forms, _rest} <- Integer.parse(rest) do
           IO.warn("""
           Plural-Forms headers in the form "nplurals=<int>" (without the "plural=<rule>" part \
@@ -354,9 +357,54 @@ defmodule Gettext.Plural do
   end
 
   defp recall_if_territory_or_raise(locale, fun) do
-    case String.split(locale, "_", parts: 2, trim: true) do
-      [lang, _territory] -> fun.(lang)
-      _other -> raise UnknownLocaleError, locale
+    # TODO: 削除するのかコメントアウトして残しておくのかの確認が必須
+    # AtomVM では Elixir.String が未実装のため手動分割を使用。
+    # case String.split(locale, "_", parts: 2, trim: true) do
+    case split_locale_language_territory(locale) do
+      {:ok, lang, _territory} -> fun.(lang)
+      :error -> raise UnknownLocaleError, locale
+    end
+  end
+
+  defp split_locale_language_territory(locale) when is_binary(locale) do
+    case :binary.match(locale, "_") do
+      {pos, 1} ->
+        lang = binary_part(locale, 0, pos)
+        territory = binary_part(locale, pos + 1, byte_size(locale) - pos - 1)
+
+        if lang != "" and territory != "" do
+          {:ok, lang, territory}
+        else
+          :error
+        end
+
+      :nomatch ->
+        :error
+    end
+  end
+
+  # AtomVM: Elixir.String.trim/1 の代替。ASCII 空白のみ除去する。
+  defp trim_binary(bin) when is_binary(bin) do
+    bin |> trim_leading() |> trim_trailing()
+  end
+
+  defp trim_leading(<<c, rest::binary>>) when c in [?\s, ?\t, ?\n, ?\r, ?\v, ?\f],
+    do: trim_leading(rest)
+
+  defp trim_leading(bin), do: bin
+
+  defp trim_trailing(bin) do
+    size = byte_size(bin)
+
+    cond do
+      size == 0 ->
+        <<>>
+
+      :binary.at(bin, size - 1) in [?\s, ?\t, ?\n, ?\r, ?\v, ?\f] ->
+        trim_trailing(binary_part(bin, 0, size - 1))
+
+      true ->
+        bin
     end
   end
 
