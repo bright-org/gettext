@@ -55,7 +55,10 @@ defmodule Gettext.Interpolation.Default do
           # This is the case where we found a binding, so we put it in the acc
           # and keep going.
           [binding, rest] ->
-            new_acc = [String.to_atom(binding) | prepend_if_not_empty(before, acc)]
+            # TODO: 削除するのかコメントアウトして残しておくのかの確認が必須
+            # AtomVM では Elixir.String が未実装のため :erlang.binary_to_atom を使用。
+            # new_acc = [String.to_atom(binding) | prepend_if_not_empty(before, acc)]
+            new_acc = [:erlang.binary_to_atom(binding, :utf8) | prepend_if_not_empty(before, acc)]
             to_interpolatable(rest, "", new_acc, start_pattern, end_pattern)
         end
     end

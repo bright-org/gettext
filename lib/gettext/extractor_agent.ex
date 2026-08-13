@@ -1,6 +1,8 @@
 defmodule Gettext.ExtractorAgent do
   @moduledoc false
 
+  # AtomVM: Agent モジュールが未実装。本モジュールはホスト上の mix gettext.extract 専用。
+  # TODO: 削除するのかコメントアウトして残しておくのかの確認が必須
   use Agent
 
   require Logger

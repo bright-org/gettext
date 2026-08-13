@@ -14,7 +14,14 @@ defmodule Gettext.Compiler do
 
   @doc false
   def __hash__(priv) do
-    hash(po_files_in_priv(priv))
+    if Code.ensure_loaded?(Mix) do
+      hash(po_files_in_priv(priv))
+    else
+      # TODO: 削除するのかコメントアウトして残しておくのかの確認が必須
+      # AtomVM ランタイムでは priv の .po を読み取れない。
+      # hash(po_files_in_priv(priv))
+      nil
+    end
   end
 
   defp hash(all_po_files) do
@@ -45,7 +52,14 @@ defmodule Gettext.Compiler do
 
       @doc false
       def __mix_recompile__? do
-        unquote(hash_po_files) != Gettext.Compiler.__hash__(unquote(priv))
+        if Code.ensure_loaded?(Mix) do
+          unquote(hash_po_files) != Gettext.Compiler.__hash__(unquote(priv))
+        else
+          # TODO: 削除するのかコメントアウトして残しておくのかの確認が必須
+          # AtomVM ランタイムでは priv の .po を読み取れないため再コンパイル判定を無効化。
+          # unquote(hash_po_files) != Gettext.Compiler.__hash__(unquote(priv))
+          false
+        end
       end
 
       # Info about the Gettext backend.
@@ -379,7 +393,10 @@ defmodule Gettext.Compiler do
   """
   @spec warn_if_domain_contains_slashes(binary) :: :ok
   def warn_if_domain_contains_slashes(domain) do
-    if String.contains?(domain, "/") do
+    # TODO: 削除するのかコメントアウトして残しておくのかの確認が必須
+    # AtomVM では Elixir.String が未実装のため :binary.match を使用。
+    # if String.contains?(domain, "/") do
+    if :binary.match(domain, "/") != :nomatch do
       _ = Logger.error(fn -> ["Slashes in domains are not supported: ", inspect(domain)] end)
     end
 

@@ -41,6 +41,7 @@ defmodule Gettext.Extractor do
   """
   @spec enable() :: :ok
   def enable() do
+    ensure_extractor_agent_started()
     ExtractorAgent.enable()
   end
 
@@ -407,4 +408,14 @@ defmodule Gettext.Extractor do
 
   defp protected?(%{references: refs}, pattern),
     do: refs |> List.flatten() |> Enum.any?(fn {path, _} -> Regex.match?(pattern, path) end)
+
+  # Application では ExtractorAgent を起動しない（AtomVM 向け）ため、
+  # ホスト上の extract / テスト実行時に必要ならここで起動する。
+  defp ensure_extractor_agent_started do
+    if Process.whereis(ExtractorAgent) do
+      :ok
+    else
+      {:ok, _pid} = ExtractorAgent.start_link([])
+    end
+  end
 end

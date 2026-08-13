@@ -3,13 +3,15 @@ defmodule Gettext.Mixfile do
 
   @version "1.0.2"
 
-  @description "Internationalization and localization through gettext"
-  @repo_url "https://github.com/elixir-gettext/gettext"
+  # AtomVM-oriented fork of elixir-gettext/gettext.
+  @description "Internationalization and localization through gettext (AtomVM-oriented fork)"
+  @repo_url "https://github.com/bright-org/gettext"
 
   def project do
     [
       app: :gettext,
       version: @version,
+      # Upstream minimum. Align with micro_phoenix (~> 1.13) only after verifying compile/tests.
       elixir: "~> 1.16",
       elixirc_paths: elixirc_paths(Mix.env()),
       build_embedded: Mix.env() == :prod,
