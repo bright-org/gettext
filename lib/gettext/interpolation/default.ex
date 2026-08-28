@@ -22,11 +22,9 @@ defmodule Gettext.Interpolation.Default do
   @doc false
   @spec to_interpolatable(String.t()) :: interpolatable()
   def to_interpolatable(string) when is_binary(string) do
-    start_pattern = :binary.compile_pattern("%{")
-    end_pattern = :binary.compile_pattern("}")
-
+    # Avoid :binary.compile_pattern/1 — unsupported on AtomVM.
     string
-    |> to_interpolatable(_current = "", _acc = [], start_pattern, end_pattern)
+    |> to_interpolatable(_current = "", _acc = [], "%{", "}")
     |> Enum.reverse()
   end
 
